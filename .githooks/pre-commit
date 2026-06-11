@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# ============================================================================
+# PRE-COMMIT HOOK - SECRET SCANNING (Client Hub Contracts)
+# ============================================================================
+# Purpose: Prevent committing sensitive files and cryptographic secrets
+# Tech Stack: Hardhat + Solidity Smart Contracts
+# ============================================================================
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}[Security] 🛡️  Scanning staged files for secrets...${NC}"
+
+# Get staged files (Added, Copied, Modified)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo -e "${GREEN}✅ No files staged for commit${NC}"
+    exit 0
+fi
+
+FORBIDDEN=0
+WARNING=0
+
+# ============================================================================
+# SECTION 1: FILE EXTENSION BLOCKING (CRITICAL - HARD BLOCK)
+# ============================================================================
+echo -e "${YELLOW}📁 Checking file extensions...${NC}"
+
+# Block actual .env files but allow .env.example and .env.template
+SENSITIVE_EXTENSIONS='(\.env$|\.env\.local$|\.env\.development$|\.env\.production$|\.env\.staging$|\.key$|\.pem$|\.p12$|\.jks$|\.pfx$|\.secret$)'
+
+for file in $STAGED_FILES; do
+    # Skip hook files themselves and lock files
+    if [[ "$file" == *".githooks/"* ]] || [[ "$file" == *"package-lock.json"* ]] || [[ "$file" == *"yarn.lock"* ]]; then
+        continue
+    fi
+    
+    # Allow .env.example and .env.template
+    if [[ "$file" == *".env.example"* ]] || [[ "$file" == *".env.template"* ]]; then
+        continue
+    fi
+    
+    if echo "$file" | grep -qE "$SENSITIVE_EXTENSIONS"; then
+        echo -e "${RED}[BLOCK] ❌ Forbidden file type: $file${NC}"
+        echo -e "${YELLOW}   → This file type should NEVER be committed${NC}"
+        FORBIDDEN=1
+    fi
+done
+
+# ============================================================================
+# SECTION 2: CRYPTO SECRETS DETECTION (HARD BLOCK)
+# ============================================================================
+echo -e "${YELLOW}🔐 Scanning for cryptographic secrets...${NC}"
+
+for file in $STAGED_FILES; do
+    # Skip non-text files and deleted files
+    if [ ! -f "$file" ]; then
+        continue
+    fi
+    
+    # Skip binary files
+    if file "$file" | grep -q "executable\|binary"; then
+        continue
+    fi
+    
+    # === CHECK 1: Ethereum/Polygon Private Keys (64 hex chars) ===
+    if grep -E "0x[a-fA-F0-9]{64}" "$file" | grep -vE "(0x0{64}|YOUR.*KEY|REPLACE|EXAMPLE|TEST.*KEY)"; then
+        echo -e "${RED}[BLOCK] ❌ Ethereum Private Key detected in: $file${NC}"
+        grep -E "0x[a-fA-F0-9]{64}" "$file" | grep -vE "(0x0{64}|YOUR.*KEY|REPLACE|EXAMPLE)" | head -n 1 | cut -c 1-60
+        echo -e "${YELLOW}   → Remove the private key and use environment variables${NC}"
+        FORBIDDEN=1
+    fi
+    
+    # === CHECK 2: PEM-encoded Private Keys ===
+    if grep -q "BEGIN.*PRIVATE KEY" "$file"; then
+        echo -e "${RED}[BLOCK] ❌ PEM Private Key header detected in: $file${NC}"
+        echo -e "${YELLOW}   → PEM files should be in .gitignore, not committed${NC}"
+        FORBIDDEN=1
+    fi
+done
+
+# ============================================================================
+# FINAL DECISION LOGIC
+# ============================================================================
+
+if [ $FORBIDDEN -eq 1 ]; then
+    echo ""
+    echo -e "${RED}======================================================${NC}"
+    echo -e "${RED}⛔ COMMIT REJECTED: Critical secrets detected!${NC}"
+    echo -e "${RED}======================================================${NC}"
+    echo -e "${YELLOW}Required actions:${NC}"
+    echo -e "  1. Remove secrets from files"
+    echo -e "  2. Add sensitive files to .gitignore"
+    echo -e "  3. Use environment variables (\${ADMIN_WALLET_KEY})"
+    echo ""
+    exit 1
+fi
+
+if [ $WARNING -eq 1 ]; then
+    echo ""
+    echo -e "${YELLOW}⚠️  Warnings detected. Please review carefully.${NC}"
+    read -p "Do you want to continue anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${RED}Commit cancelled by user${NC}"
+        exit 1
+    fi
+fi
+
+echo ""
+echo -e "${GREEN}✅ Security Scan Passed. Proceeding with commit...${NC}"
+exit 0
