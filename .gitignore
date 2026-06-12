@@ -18,3 +18,13 @@
 
 # Hardhat coverage reports
 /coverage
+
+# Environments
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Keys
+*.key
+*.pem
