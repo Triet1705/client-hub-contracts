@@ -1,5 +1,5 @@
 import fs from "fs";
-import { ethers } from "ethers";
+import { network } from "hardhat";
 
 /**
  * Setup dev environment:
@@ -10,8 +10,12 @@ import { ethers } from "ethers";
  * Uses manual nonce tracking to avoid Hardhat automining race.
  */
 async function main() {
+  const { ethers } = await network.connect();
   const [deployer] = await ethers.getSigners();
   const provider = deployer.provider;
+  if (provider == null) {
+    throw new Error("No provider available for deployer signer");
+  }
 
   console.log("Using deployer account:", deployer.address);
 
@@ -52,7 +56,7 @@ async function main() {
     "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
   ];
 
-  const tokenContract = token as ethers.Contract;
+  const tokenContract = token as any;
   for (const account of accounts) {
     const tx = await tokenContract.mint(account, mintAmount, { nonce: nonce++ });
     await tx.wait();

@@ -33,7 +33,7 @@ jobs:
         run: npx hardhat compile
 
       - name: Run Tests
-        run: npx hardhat test
+        run: npm run test:ci
 
   dependency-security:
     name: Security Audit

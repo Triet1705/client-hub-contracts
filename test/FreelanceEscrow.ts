@@ -1,5 +1,7 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { network } from "hardhat";
+
+const { ethers } = await network.connect();
 
 describe("FreelanceEscrow", function () {
   let escrow: any;
@@ -168,7 +170,9 @@ describe("FreelanceEscrow", function () {
     it("Should fail if non-admin tries to resolve", async function () {
       await expect(
         escrow.connect(otherAccount).adminResolve(INVOICE_ID, true)
-      ).to.be.reverted; // OpenZeppelin Ownable custom error or generic revert
+      )
+        .to.be.revertedWithCustomError(escrow, "OwnableUnauthorizedAccount")
+        .withArgs(otherAccount.address);
     });
   });
 
