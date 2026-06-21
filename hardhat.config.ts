@@ -1,10 +1,11 @@
-import type { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+import { defineConfig } from "hardhat/config";
+import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const config: HardhatUserConfig = {
+export default defineConfig({
+  plugins: [hardhatToolboxMochaEthers],
   solidity: {
     version: "0.8.28",
     settings: {
@@ -26,6 +27,4 @@ const config: HardhatUserConfig = {
       accounts: process.env.ADMIN_WALLET_KEY ? [process.env.ADMIN_WALLET_KEY] : [],
     },
   },
-};
-
-export default config;
+});

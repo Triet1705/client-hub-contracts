@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "test:ci": "node scripts/assert-hardhat-tests.mjs"
   },
   "keywords": [],
   "author": "",
