@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "hardhat test",
-    "test:ci": "node scripts/assert-hardhat-tests.mjs"
+    "test:ci": "node scripts/assert-hardhat-tests.mjs",
+    "bootstrap:local": "hardhat run --network localhost scripts/bootstrap-local.ts",
+    "sync:local-env": "tsx scripts/sync-local-env.ts",
+    "local:bootstrap": "hardhat run --network localhost scripts/bootstrap-local.ts && tsx scripts/sync-local-env.ts"
   },
   "keywords": [],
   "author": "",
