@@ -4,6 +4,7 @@ import path from "path";
 type Manifest = {
   contracts: {
     escrow: { address: string };
+    auditAnchor: { address: string };
     token: { address: string; decimals: number };
   };
 };
@@ -48,6 +49,7 @@ const projectRoot = path.resolve("..");
 const manifest = readManifest(manifestPath);
 
 const escrowAddress = manifest.contracts.escrow.address;
+const auditAnchorAddress = manifest.contracts.auditAnchor.address;
 const tokenAddress = manifest.contracts.token.address;
 const tokenDecimals = String(manifest.contracts.token.decimals);
 
@@ -58,6 +60,11 @@ updateEnvFile(backendEnvPath, {
   ESCROW_CONTRACT_ADDRESS: escrowAddress,
   ESCROW_TOKEN_ADDRESS: tokenAddress,
   ESCROW_TOKEN_DECIMALS: tokenDecimals,
+  AUDIT_ANCHOR_CONTRACT_ADDRESS: auditAnchorAddress,
+  AUDIT_ANCHOR_ENABLED: "true",
+  AUDIT_ANCHOR_BATCH_SIZE: "1",
+  AUDIT_ANCHOR_SCHEDULER_DELAY_MS: "10000",
+  BLOCKCHAIN_REQUIRED_CONFIRMATIONS: "1",
 });
 
 updateEnvFile(frontendEnvPath, {
