@@ -29,6 +29,12 @@ async function main() {
   const certificateAddress = await certificate.getAddress();
   console.log("WorkCertificate deployed to:", certificateAddress);
 
+  const AuditAnchorFactory = await ethers.getContractFactory("AuditAnchorRegistry");
+  const auditAnchor = await AuditAnchorFactory.deploy();
+  const auditAnchorDeployment = await auditAnchor.deploymentTransaction()?.wait();
+  const auditAnchorAddress = await auditAnchor.getAddress();
+  console.log("AuditAnchorRegistry deployed to:", auditAnchorAddress);
+
   const deploymentRecord = {
     network: hardhatNetworkName,
     chainId,
@@ -45,6 +51,12 @@ async function main() {
         address: certificateAddress,
         transactionHash: certificateDeployment?.hash ?? null,
         blockNumber: certificateDeployment?.blockNumber ?? null,
+        verified: false,
+      },
+      AuditAnchorRegistry: {
+        address: auditAnchorAddress,
+        transactionHash: auditAnchorDeployment?.hash ?? null,
+        blockNumber: auditAnchorDeployment?.blockNumber ?? null,
         verified: false,
       },
     },

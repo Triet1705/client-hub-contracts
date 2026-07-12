@@ -36,6 +36,11 @@ async function main() {
   const certificateDeployment = await certificate.deploymentTransaction()?.wait();
   const certificateAddress = await certificate.getAddress();
 
+  const AuditAnchorFactory = await ethers.getContractFactory("AuditAnchorRegistry");
+  const auditAnchor = await AuditAnchorFactory.deploy();
+  const auditAnchorDeployment = await auditAnchor.deploymentTransaction()?.wait();
+  const auditAnchorAddress = await auditAnchor.getAddress();
+
   const TokenFactory = await ethers.getContractFactory("MockERC20");
   const token = await TokenFactory.deploy("Mock USDT", "mUSDT");
   const tokenDeployment = await token.deploymentTransaction()?.wait();
@@ -78,6 +83,12 @@ async function main() {
         txHash: certificateDeployment?.hash ?? null,
         blockNumber: certificateDeployment?.blockNumber ?? null,
       },
+      auditAnchor: {
+        name: "AuditAnchorRegistry",
+        address: auditAnchorAddress,
+        txHash: auditAnchorDeployment?.hash ?? null,
+        blockNumber: auditAnchorDeployment?.blockNumber ?? null,
+      },
       token: {
         name: "Mock USDT",
         symbol: "mUSDT",
@@ -98,6 +109,7 @@ async function main() {
     txHashes: {
       escrowDeploy: escrowDeployment?.hash ?? null,
       certificateDeploy: certificateDeployment?.hash ?? null,
+      auditAnchorDeploy: auditAnchorDeployment?.hash ?? null,
       tokenDeploy: tokenDeployment?.hash ?? null,
       whitelistToken: whitelistReceipt?.hash ?? whitelistTx.hash,
       mintDemoBalances: mintedAccounts.map((account) => account.txHash),
@@ -112,6 +124,7 @@ async function main() {
 
   console.log("FreelanceEscrow:", escrowAddress);
   console.log("WorkCertificate:", certificateAddress);
+  console.log("AuditAnchorRegistry:", auditAnchorAddress);
   console.log("mUSDT:", tokenAddress);
   console.log("Manifest:", manifestPath);
 }
